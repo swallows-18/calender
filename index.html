@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📅 スケジュール管理アプリ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .sidebar {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .sidebar h3 {
+            margin-bottom: 20px;
+            color: #444;
+            font-size: 1.3em;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .month-title {
+            font-size: 1.8em;
+            color: #333;
+            font-weight: 700;
+        }
+
+        .calendar-container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            margin-top: 20px;
+        }
+
+        .calendar-header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1em;
+            border-radius: 8px;
+        }
+
+        .calendar-day {
+            background: white;
+            border: 2px solid #f0f0f0;
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 120px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .calendar-day:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .calendar-day.other-month {
+            background: #f8f9fa;
+            color: #ccc;
+        }
+
+        .calendar-day.selected {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .calendar-day.today {
+            border-color: #ff6b6b;
+            border-width: 3px;
+        }
+
+        .day-number {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .holiday {
+            color: #ff6b6b;
+            font-size: 0.8em;
+            margin-bottom: 5px;
+        }
+
+        .weather-emoji {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+
+        .schedule-indicator {
+            color: #51cf66;
+            font-size: 1.5em;
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+        }
+
+        .schedule-editor {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        .schedule-editor h3 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.4em;
+        }
+
+        .schedule-textarea {
+            width: 100%;
+            height: 150px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        .schedule-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .schedule-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .schedule-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .save-btn {
+            background: linear-gradient(45deg, #51cf66, #40c057);
+            color: white;
+        }
+
+        .delete-btn {
+            background: linear-gradient(45deg, #ff6b6b, #fa5252);
+            color: white;
+        }
+
+        .schedule-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .area-select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            background: white;
+        }
+
+        .schedule-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .schedule-item {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .schedule-date {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .schedule-content {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .status-message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .success {
+            background: rgba(81, 207, 102, 0.2);
+            color: #2b8a3e;
+        }
+
+        .error {
+            background: rgba(255, 107, 107, 0.2);
+            color: #c92a2a;
+        }
+
+        .info {
+            background: rgba(102, 126, 234, 0.2);
+            color: #364fc7;
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .calendar {
+                gap: 1px;
+            }
+            
+            .calendar-day {
+                min-height: 80px;
+                padding: 8px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📅 スケジュール管理アプリ</h1>
+        
+        <div class="main-content">
+            <div class="calendar-section">
+                <div class="controls">
+                    <button class="nav-btn" onclick="previousMonth()">◀️ 前月</button>
+                    <h2 class="month-title" id="monthTitle"></h2>
+                    <button class="nav-btn" onclick="nextMonth()">翌月 ▶️</button>
+                </div>
+                
+                <div class="calendar-container">
+                    <div class="calendar">
+                        <div class="calendar-header">月</div>
+                        <div class="calendar-header">火</div>
+                        <div class="calendar-header">水</div>
+                        <div class="calendar-header">木</div>
+                        <div class="calendar-header">金</div>
+                        <div class="calendar-header">土</div>
+                        <div class="calendar-header">日</div>
+                        <div id="calendarDays"></div>
+                    </div>
+                </div>
+
+                <div class="schedule-editor">
+                    <h3 id="selectedDateTitle">📝 日付を選択してください</h3>
+                    <textarea id="scheduleText" class="schedule-textarea" placeholder="予定や日記を入力してください..."></textarea>
+                    <div class="schedule-buttons">
+                        <button class="schedule-btn save-btn" onclick="saveSchedule()">💾 保存</button>
+                        <button class="schedule-btn delete-btn" onclick="deleteSchedule()">🗑️ 削除</button>
+                    </div>
+                    <div id="statusMessage"></div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <h3>⚙️ 設定</h3>
+                <select id="areaSelect" class="area-select" onchange="changeArea()">
+                    <option value="130000">東京</option>
+                    <option value="016000">札幌</option>
+                    <option value="040000">仙台</option>
+                    <option value="230000">名古屋</option>
+                    <option value="270000">大阪</option>
+                    <option value="340000">広島</option>
+                    <option value="400000">福岡</option>
+                    <option value="471000">那覇</option>
+                </select>
+                
+                <button class="nav-btn" onclick="goToToday()" style="width: 100%; margin-bottom: 20px;">今月に戻る</button>
+                
+                <h3>📋 保存済みの予定</h3>
+                <div id="scheduleList" class="schedule-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 天気コードから絵文字へのマッピング
+        const WEATHER_CODE_TO_EMOJI = {
+            "100": "☀️", "101": "🌤️", "102": "🌦️", "103": "🌨️", "104": "🌨️", "105": "🌨️",
+            "106": "🌨️", "107": "🌨️", "108": "🌨️", "110": "☀️", "111": "🌤️", "112": "🌧️",
+            "113": "🌧️", "114": "🌧️", "115": "🌨️", "116": "🌨️", "117": "🌨️", "118": "🌨️",
+            "119": "🌨️", "120": "🌨️", "121": "🌨️", "122": "🌨️", "123": "☀️", "124": "☀️",
+            "125": "☀️", "126": "☀️", "127": "☀️", "128": "☀️", "130": "☀️", "131": "☀️",
+            "132": "☀️", "140": "🌧️", "160": "🌨️", "170": "🌨️", "181": "🌨️", "200": "☁️",
+            "201": "🌥️", "202": "🌧️", "203": "🌧️", "204": "🌧️", "205": "🌧️", "206": "🌧️",
+            "207": "🌧️", "208": "🌧️", "209": "🌧️", "210": "☁️", "211": "🌥️", "212": "🌧️",
+            "213": "🌧️", "214": "🌧️", "215": "🌨️", "216": "🌨️", "217": "🌨️", "218": "🌨️",
+            "219": "🌨️", "220": "🌨️", "221": "🌨️", "222": "🌨️", "223": "☁️", "224": "☀️",
+            "225": "☀️", "226": "☀️", "227": "☀️", "228": "🌧️", "229": "🌧️", "230": "🌧️",
+            "231": "☀️", "240": "🌧️", "250": "🌨️", "260": "🌨️", "270": "🌨️", "281": "🌨️",
+            "300": "🌧️", "301": "🌧️", "302": "🌧️", "303": "🌧️", "304": "🌧️", "306": "🌧️",
+            "308": "🌧️", "309": "🌧️", "311": "🌧️", "313": "🌧️", "314": "🌧️", "315": "🌧️",
+            "316": "🌧️", "317": "🌧️", "320": "☁️", "321": "☁️", "322": "🌨️", "323": "☀️",
+            "324": "☀️", "325": "☀️", "326": "🌧️", "327": "🌧️", "328": "🌧️", "329": "🌧️",
+            "340": "🌨️", "350": "🌨️", "361": "🌨️", "371": "🌨️", "400": "❄️", "401": "❄️",
+            "402": "❄️", "403": "❄️", "405": "❄️", "406": "❄️", "407": "❄️", "409": "❄️",
+            "411": "❄️", "413": "❄️", "414": "❄️", "415": "❄️", "416": "❄️", "417": "❄️",
+            "420": "❄️", "421": "❄️", "422": "❄️", "423": "❄️", "425": "❄️", "426": "❄️",
+            "427": "❄️"
+        };
+
+        // 日本の祝日データ（2024-2025年）
+        const HOLIDAYS = {
+            "2024-01-01": "元日",
+            "2024-01-08": "成人の日",
+            "2024-02-11": "建国記念の日",
+            "2024-02-12": "建国記念の日振替休日",
+            "2024-02-23": "天皇誕生日",
+            "2024-03-20": "春分の日",
+            "2024-04-29": "昭和の日",
+            "2024-05-03": "憲法記念日",
+            "2024-05-04": "みどりの日",
+            "2024-05-05": "こどもの日",
+            "2024-05-06": "こどもの日振替休日",
+            "2024-07-15": "海の日",
+            "2024-08-11": "山の日",
+            "2024-08-12": "山の日振替休日",
+            "2024-09-16": "敬老の日",
+            "2024-09-22": "秋分の日",
+            "2024-09-23": "秋分の日振替休日",
+            "2024-10-14": "スポーツの日",
+            "2024-11-03": "文化の日",
+            "2024-11-04": "文化の日振替休日",
+            "2024-11-23": "勤労感謝の日",
+            "2025-01-01": "元日",
+            "2025-01-13": "成人の日",
+            "2025-02-11": "建国記念の日",
+            "2025-02-23": "天皇誕生日",
+            "2025-02-24": "天皇誕生日振替休日",
+            "2025-03-20": "春分の日",
+            "2025-04-29": "昭和の日",
+            "2025-05-03": "憲法記念日",
+            "2025-05-04": "みどりの日",
+            "2025-05-05": "こどもの日",
+            "2025-05-06": "こどもの日振替休日",
+            "2025-07-21": "海の日",
+            "2025-08-11": "山の日",
+            "2025-09-15": "敬老の日",
+            "2025-09-23": "秋分の日",
+            "2025-10-13": "スポーツの日",
+            "2025-11-03": "文化の日",
+            "2025-11-23": "勤労感謝の日",
+            "2025-11-24": "勤労感謝の日振替休日"
+        };
+
+        // グローバル変数
+        let currentDate = new Date();
+        let selectedDate = null;
+        let schedules = {};
+        let weatherData = {};
+        let currentAreaCode = "130000";
+
+        // ローカルストレージからデータを読み込み
+        function loadSchedules() {
+            const saved = localStorage.getItem('schedules');
+            if (saved) {
+                schedules = JSON.parse(saved);
+            }
+        }
+
+        // ローカルストレージにデータを保存
+        function saveSchedules() {
+            localStorage.setItem('schedules', JSON.stringify(schedules));
+        }
+
+        // 天気データを取得
+        async function fetchWeatherData() {
+            try {
+                const response = await fetch(`https://www.jma.go.jp/bosai/forecast/data/forecast/${currentAreaCode}.json`);
+                const data = await response.json();
+                
+                if (data && data[0] && data[0].timeSeries) {
+                    const timeSeries = data[0].timeSeries[0];
+                    const dates = timeSeries.timeDefines || [];
+                    const weatherCodes = timeSeries.areas[0].weatherCodes || [];
+                    
+                    weatherData = {};
+                    dates.forEach((dateStr, index) => {
+                        const date = new Date(dateStr);
+                        const dateKey = formatDateKey(date);
+                        weatherData[dateKey] = weatherCodes[index];
+                    });
+                }
+            } catch (error) {
+                console.warn('天気データの取得に失敗しました:', error);
+            }
+        }
+
+        // 日付をキー用の文字列に変換
+        function formatDateKey(date) {
+            return date.getFullYear() + '-' + 
+                   String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                   String(date.getDate()).padStart(2, '0');
+        }
+
+        // 曜日名を取得
+        function getWeekdayName(date) {
+            const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+            return weekdays[date.getDay()];
+        }
+
+        // カレンダーを描画
+        function drawCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const today = new Date();
+            
+            // 月のタイトルを更新
+            document.getElementById('monthTitle').textContent = `${year}年 ${month + 1}月`;
+            
+            // カレンダーの日付部分をクリア
+            const calendarDays = document.getElementById('calendarDays');
+            calendarDays.innerHTML = '';
+            
+            // 月の最初の日と最後の日を取得
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            
+            // 月の最初の週の月曜日を取得
+            const startDate = new Date(firstDay);
+            const dayOfWeek = (firstDay.getDay() + 6) % 7; // 月曜日を0とする
+            startDate.setDate(startDate.getDate() - dayOfWeek);
+            
+            // 42日分のカレンダーを作成（6週間）
+            for (let i = 0; i < 42; i++) {
+                const currentDay = new Date(startDate);
+                currentDay.setDate(startDate.getDate() + i);
+                
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                
+                // 他の月の日付かどうかをチェック
+                if (currentDay.getMonth() !== month) {
+                    dayElement.classList.add('other-month');
+                }
+                
+                // 今日の日付かどうかをチェック
+                if (currentDay.toDateString() === today.toDateString()) {
+                    dayElement.classList.add('today');
+                }
+                
+                // 選択されている日付かどうかをチェック
+                if (selectedDate && currentDay.toDateString() === selectedDate.toDateString()) {
+                    dayElement.classList.add('selected');
+                }
+                
+                // 日付番号
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'day-number';
+                dayNumber.textContent = currentDay.getDate();
+                
+                // 土日の色分け
+                if (currentDay.getDay() === 0) { // 日曜日
+                    dayNumber.style.color = '#ff6b6b';
+                } else if (currentDay.getDay() === 6) { // 土曜日
+                    dayNumber.style.color = '#4dabf7';
+                }
+                
+                dayElement.appendChild(dayNumber);
+                
+                // 祝日チェック
+                const dateKey = formatDateKey(currentDay);
+                if (HOLIDAYS[dateKey]) {
+                    const holiday = document.createElement('div');
+                    holiday.className = 'holiday';
+                    holiday.textContent = HOLIDAYS[dateKey];
+                    dayElement.appendChild(holiday);
+                    dayNumber.style.color = '#ff6b6b';
+                }
+                
+                // 天気情報
+                if (weatherData[dateKey]) {
+                    const weatherEmoji = WEATHER_CODE_TO_EMOJI[weatherData[dateKey]];
+                    if (weatherEmoji) {
+                        const weather = document.createElement('div');
+                        weather.className = 'weather-emoji';
+                        weather.textContent = weatherEmoji;
+                        dayElement.appendChild(weather);
+                    }
+                }
+                
+                // 予定インジケータ
+                if (schedules[dateKey] && schedules[dateKey].trim()) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'schedule-indicator';
+                    indicator.textContent = '●';
+                    dayElement.appendChild(indicator);
+                }
+                
+                // クリックイベント
+                dayElement.addEventListener('click', () => {
+                    selectDate(currentDay);
+                });
+                
+                calendarDays.appendChild(dayElement);
+            }
+            
+            // 予定リストを更新
+            updateScheduleList();
+        }
+
+        // 日付を選択
+        function selectDate(date) {
+            selectedDate = new Date(date);
+            const dateKey = formatDateKey(selectedDate);
+            
+            // 選択した日付のタイトルを更新
+            const title = `📝 ${selectedDate.getFullYear()}/${selectedDate.getMonth() + 1}/${selectedDate.getDate()} (${getWeekdayName(selectedDate)}) の予定・日記`;
+            document.getElementById('selectedDateTitle').textContent = title;
+            
+            // テキストエリアに現在の予定を表示
+            document.getElementById('scheduleText').value = schedules[dateKey] || '';
+            
+            // カレンダーを再描画
+            drawCalendar();
+            
+            // ステータスメッセージをクリア
+            document.getElementById('statusMessage').innerHTML = '';
+        }
+
+        // 予定を保存
+        function saveSchedule() {
+            if (!selectedDate) {
+                showMessage('日付を選択してください', 'error');
+                return;
+            }
+            
+            const dateKey = formatDateKey(selectedDate);
+            const scheduleText = document.getElementById('scheduleText').value;
+            
+            schedules[dateKey] = scheduleText;
+            saveSchedules();
+            
+            showMessage('保存しました！', 'success');
+            drawCalendar();
+            updateScheduleList();
+        }
+
+        // 予定を削除
+        function deleteSchedule() {
+            if (!selectedDate) {
+                showMessage('日付を選択してください', 'error');
+                return;
+            }
+            
+            const dateKey = formatDateKey(selectedDate);
+            
+            if (schedules[dateKey]) {
+                delete schedules[dateKey];
+                saveSchedules();
+                document.getElementById('scheduleText').value = '';
+                showMessage('削除しました！', 'success');
+                drawCalendar();
+                updateScheduleList();
+            } else {
+                showMessage('この日には保存された予定がありません', 'info');
+            }
+        }
+
+        // ステータスメッセージを表示
+        function showMessage(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.innerHTML = `<div class="status-message ${type}">${message}</div>`;
+            
+            // 3秒後にメッセージを消去
+            setTimeout(() => {
+                statusDiv.innerHTML = '';
+            }, 3000);
+        }
+
+        // 前月に移動
+        function previousMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            drawCalendar();
+            fetchWeatherData();
+        }
+
+        // 次月に移動
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            drawCalendar();
+            fetchWeatherData();
+        }
+
+        // 今日に戻る
+        function goToToday() {
+            currentDate = new Date();
+            selectedDate = new Date();
+            selectDate(selectedDate);
+            fetchWeatherData();
+        }
+
+        // 地域を変更
+        function changeArea() {
+            currentAreaCode = document.getElementById('areaSelect').value;
+            fetchWeatherData().then(() => {
+                drawCalendar();
+            });
+        }
+
+        // 予定リストを更新
+        function updateScheduleList() {
+            const listDiv = document.getElementById('scheduleList');
+            listDiv.innerHTML = '';
+            
+            // 日付順にソート
+            const sortedSchedules = Object.entries(schedules)
+                .filter(([dateKey, content]) => content && content.trim())
+                .sort(([a], [b]) => a.localeCompare(b));
+            
+            sortedSchedules.forEach(([dateKey, content]) => {
+                const date = new Date(dateKey);
+                const item = document.createElement('div');
+                item.className = 'schedule-item';
+                
+                const dateDiv = document.createElement('div');
+                dateDiv.className = 'schedule-date';
+                dateDiv.textContent = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'schedule-content';
+                contentDiv.textContent = content.substring(0, 50) + (content.length > 50 ? '...' : '');
+                
+                item.appendChild(dateDiv);
+                item.appendChild(contentDiv);
+                
+                // クリックで日付を選択
+                item.addEventListener('click', () => {
+                    selectDate(date);
+                });
+                
+                listDiv.appendChild(item);
+            });
+        }
+
+        // 初期化
+        function init() {
+            loadSchedules();
+            selectDate(new Date());
+            fetchWeatherData().then(() => {
+                drawCal
